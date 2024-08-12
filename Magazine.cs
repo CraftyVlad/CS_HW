@@ -1,11 +1,11 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 
 public class Magazine
 {
 
-    public string Title {  get; set; }
+    public string Title { get; set; }
     public string Publisher { get; set; }
-    public DateTime PublicationDate { get; set; }
+    public DateOnly PublicationDate { get; set; }
     public int PageCount { get; set; }
 
     public override string ToString()
@@ -28,7 +28,7 @@ class Program
         string publisher = Console.ReadLine()!;
 
         Console.WriteLine("Введіть дату видання (dd-mm-yyyy):");
-        DateTime publicationDate = DateTime.Parse(Console.ReadLine()!);
+        DateOnly publicationDate = DateOnly.Parse(Console.ReadLine()!);
 
         Console.WriteLine("Введіть кількість сторінок:");
         int pageCount = int.Parse(Console.ReadLine()!);
@@ -49,7 +49,7 @@ class Program
         Console.WriteLine("Інформація про журнал збережена у файл 'magazine.json'.");
 
         string loadedJsonString = File.ReadAllText("../../../magazine.json");
-        Magazine loadedMagazine = JsonSerializer.Deserialize< Magazine>(loadedJsonString)!;
+        Magazine loadedMagazine = JsonSerializer.Deserialize<Magazine>(loadedJsonString)!;
 
         Console.WriteLine($"Завантажена інформація про журнал: '{loadedMagazine}'.");
     }
