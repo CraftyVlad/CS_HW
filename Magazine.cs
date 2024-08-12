@@ -27,7 +27,7 @@ class Program
         Console.WriteLine("Введіть назву видавця:");
         string publisher = Console.ReadLine()!;
 
-        Console.WriteLine("Введіть дату видання (yyyy-mm-dd):");
+        Console.WriteLine("Введіть дату видання (dd-mm-yyyy):");
         DateTime publicationDate = DateTime.Parse(Console.ReadLine()!);
 
         Console.WriteLine("Введіть кількість сторінок:");
