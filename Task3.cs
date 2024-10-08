@@ -6,7 +6,6 @@ class Program
     {
         string directoryPath = "../../../testing";
 
-        // Prompt the user for the max execution time.
         Console.WriteLine("Enter the maximum execution time in seconds:");
         if (!int.TryParse(Console.ReadLine(), out int maxExecutionTimeInSeconds) || maxExecutionTimeInSeconds <= 0)
         {
@@ -17,7 +16,6 @@ class Program
         Console.WriteLine($"Processing files in directory: {directoryPath}");
         Console.WriteLine($"Max execution time: {maxExecutionTimeInSeconds} seconds");
 
-        // Get all files in the specified directory.
         string[] files = Directory.GetFiles(directoryPath);
         foreach (string file in files)
         {
@@ -27,15 +25,13 @@ class Program
         CancellationTokenSource cts = new CancellationTokenSource();
         Task.Run(() => MainThreadCheckForInput(cts), cts.Token);
 
-        // Run the file processing task with a cancellation token.
         var processingTask = ProcessFilesAsync(files, cts.Token);
 
-        // Set up the cancellation timeout.
         cts.CancelAfter(TimeSpan.FromSeconds(maxExecutionTimeInSeconds));
 
         try
         {
-            processingTask.Wait(cts.Token); // Wait for the task to complete or be canceled.
+            processingTask.Wait(cts.Token);
         }
         catch (OperationCanceledException)
         {
@@ -55,7 +51,6 @@ class Program
         Console.WriteLine("Program has finished.");
     }
 
-    // Simulate processing files asynchronously.
     static async Task ProcessFilesAsync(string[] files, CancellationToken token)
     {
         foreach (string file in files)
@@ -64,45 +59,36 @@ class Program
             {
                 Console.WriteLine($"Processing file: {Path.GetFileName(file)}");
 
-                // Simulate file processing by writing a large amount of data.
-                string newData = new string('X', 1000000); // Replace with smaller string for testing.
+                string newData = new string('X', 1000000);
                 using (StreamWriter writer = new StreamWriter(file, false, Encoding.UTF8))
                 {
                     await writer.WriteAsync(newData.AsMemory(), token);
                 }
 
-                // Simulate some delay for each file to make the process long.
-                await Task.Delay(2000, token); // Simulate delay for processing (2 seconds per file).
+                await Task.Delay(2000, token);
             }
             catch (OperationCanceledException)
             {
                 Console.WriteLine($"Processing of {Path.GetFileName(file)} was canceled. Clearing all files.");
-                // Cancel all files when any cancellation happens.
                 ClearAllFiles(files);
-                throw; // Rethrow to propagate the cancellation.
+                throw;
             }
 
             if (token.IsCancellationRequested)
             {
                 Console.WriteLine($"Cancellation requested. Clearing all files.");
-                ClearAllFiles(files); // Clear all files upon cancellation.
-                //if (File.ReadAllLines(file) == null)
-                //{
-                //    Console.WriteLine("JJJJJJJJJJJJJ");
-                //}
+                ClearAllFiles(files);
                 token.ThrowIfCancellationRequested();
             }
         }
     }
 
-    // Method to clear all files in case of cancellation.
     static void ClearAllFiles(string[] files)
     {
         foreach (string file in files)
         {
             try
             {
-                // Clear the content of each file.
                 File.WriteAllText(file, string.Empty);
                 Console.WriteLine($"Cleared content of file: {Path.GetFileName(file)}");
             }
@@ -113,7 +99,6 @@ class Program
         }
     }
 
-    // This method runs on the main thread, checking for user input.
     static void MainThreadCheckForInput(CancellationTokenSource cts)
     {
         Console.WriteLine("Main thread continues to run. Type 'cancel' to stop processing early.");
