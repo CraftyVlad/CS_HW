@@ -1,8 +1,6 @@
-﻿using System.Text;
-
 class Program
 {
-    static void Main(string[] args)
+    static void Main()
     {
         string directoryPath = "../../../testing";
 
@@ -23,35 +21,25 @@ class Program
         }
 
         CancellationTokenSource cts = new CancellationTokenSource();
-        Task.Run(() => MainThreadCheckForInput(cts), cts.Token);
-
-        var processingTask = ProcessFilesAsync(files, cts.Token);
-
         cts.CancelAfter(TimeSpan.FromSeconds(maxExecutionTimeInSeconds));
 
         try
         {
-            processingTask.Wait(cts.Token);
+            ProcessFiles(files, cts.Token);
         }
         catch (OperationCanceledException)
         {
             Console.WriteLine("Processing canceled due to time limit exceeded.");
         }
-        catch (AggregateException ex)
+        catch (Exception ex)
         {
-            foreach (var inner in ex.InnerExceptions)
-            {
-                if (inner is OperationCanceledException)
-                    Console.WriteLine("Processing canceled due to time limit exceeded.");
-                else
-                    Console.WriteLine(inner.Message);
-            }
+            Console.WriteLine($"Error: {ex.Message}");
         }
 
         Console.WriteLine("Program has finished.");
     }
 
-    static async Task ProcessFilesAsync(string[] files, CancellationToken token)
+    static void ProcessFiles(string[] files, CancellationToken token)
     {
         foreach (string file in files)
         {
@@ -59,13 +47,16 @@ class Program
             {
                 Console.WriteLine($"Processing file: {Path.GetFileName(file)}");
 
-                string newData = new string('X', 1000000);
-                using (StreamWriter writer = new StreamWriter(file, false, Encoding.UTF8))
+                string newData = new string('X', 10000);
+                using (StreamWriter writer = new StreamWriter(file, false))
                 {
-                    await writer.WriteAsync(newData.AsMemory(), token);
+                    writer.Write(newData);
                 }
 
-                await Task.Delay(2000, token);
+                if (token.WaitHandle.WaitOne(1000))
+                {
+                    throw new OperationCanceledException();
+                }
             }
             catch (OperationCanceledException)
             {
@@ -76,9 +67,9 @@ class Program
 
             if (token.IsCancellationRequested)
             {
-                Console.WriteLine($"Cancellation requested. Clearing all files.");
+                Console.WriteLine("Cancellation requested. Clearing all files.");
                 ClearAllFiles(files);
-                token.ThrowIfCancellationRequested();
+                throw new OperationCanceledException();
             }
         }
     }
@@ -95,25 +86,6 @@ class Program
             catch (Exception ex)
             {
                 Console.WriteLine($"Failed to clear file {Path.GetFileName(file)}: {ex.Message}");
-            }
-        }
-    }
-
-    static void MainThreadCheckForInput(CancellationTokenSource cts)
-    {
-        Console.WriteLine("Main thread continues to run. Type 'cancel' to stop processing early.");
-
-        while (!cts.Token.IsCancellationRequested)
-        {
-            if (Console.KeyAvailable)
-            {
-                var key = Console.ReadLine();
-                if (key != null && key.ToLower() == "cancel")
-                {
-                    Console.WriteLine("Cancellation requested by user.");
-                    cts.Cancel();
-                    break;
-                }
             }
         }
     }
